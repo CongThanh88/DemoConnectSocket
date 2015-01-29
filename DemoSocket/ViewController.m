@@ -7,6 +7,8 @@
 //
 
 #import "ViewController.h"
+#include <ifaddrs.h>
+#include <arpa/inet.h>
 
 @interface ViewController ()
 
@@ -16,11 +18,13 @@
 {
     NSInputStream *inputStream;
     NSOutputStream *outputStream;
+    NSMutableData *OutputData;
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
+    _lblMyIP.text = [self getIPAddress];
 }
 
 - (void)initNetworkCommunicationToHost:(NSString*)host andPort:(NSInteger)port {
@@ -51,8 +55,10 @@
 - (IBAction)btnSend:(id)sender {
     if (_txtComposeMessage.text) {
         
-        NSData *data = [[NSData alloc] initWithData:[_txtComposeMessage.text dataUsingEncoding:NSASCIIStringEncoding]];
-        [outputStream write:[data bytes] maxLength:[data length]];
+        NSString *response  = @"HELLO1234";
+        NSData *data = [[NSData alloc] initWithData:[response dataUsingEncoding:NSASCIIStringEncoding]];
+        [outputStream write:[data bytes] maxLength:[data length]];	//<<Returns actual number of bytes sent - check if trying to send a large number of bytes as they may well not have all gone in this write and will need sending once there is a hasspaceavailable event
+
         
         NSString *sentString = [NSString stringWithFormat:@":Sent: %@",_txtComposeMessage.text];
         if (!_txtConversationView.text) {
@@ -66,7 +72,7 @@
 
 - (IBAction)btnConnect:(id)sender {
     if (_txtIpConnect.text) {
-        [self connectToHost:_txtIpConnect.text port:8888];
+        [self connectToHost:_txtIpConnect.text port:2233];
     }
 }
 
@@ -74,6 +80,7 @@
 -(void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode
 {
     switch (eventCode) {
+            
         case NSStreamEventOpenCompleted:
             NSLog(@"Stream opened");
             break;
@@ -116,5 +123,35 @@
     }
 }
 
+- (NSString *)getIPAddress {
+    
+    NSString *address = @"error";
+    struct ifaddrs *interfaces = NULL;
+    struct ifaddrs *temp_addr = NULL;
+    int success = 0;
+    // retrieve the current interfaces - returns 0 on success
+    success = getifaddrs(&interfaces);
+    if (success == 0) {
+        // Loop through linked list of interfaces
+        temp_addr = interfaces;
+        while(temp_addr != NULL) {
+            if(temp_addr->ifa_addr->sa_family == AF_INET) {
+                // Check if interface is en0 which is the wifi connection on the iPhone
+                if([[NSString stringWithUTF8String:temp_addr->ifa_name] isEqualToString:@"en0"]) {
+                    // Get NSString from C String
+                    address = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
+                    
+                }
+                
+            }
+            
+            temp_addr = temp_addr->ifa_next;
+        }
+    }
+    // Free memory
+    freeifaddrs(interfaces);
+    return address;
+    
+}
 
 @end
