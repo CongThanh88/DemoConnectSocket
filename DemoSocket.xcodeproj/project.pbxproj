@@ -14,6 +14,7 @@
 		A4715E9B1A7A343C00A68635 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A4715E9A1A7A343C00A68635 /* Images.xcassets */; };
 		A4715E9E1A7A343C00A68635 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = A4715E9C1A7A343C00A68635 /* LaunchScreen.xib */; };
 		A4715EAA1A7A343C00A68635 /* DemoSocketTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A4715EA91A7A343C00A68635 /* DemoSocketTests.m */; };
+		A494D7621A7C0A420074D030 /* GCDAsyncSocket.m in Sources */ = {isa = PBXBuildFile; fileRef = A494D7611A7C0A420074D030 /* GCDAsyncSocket.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,6 +41,8 @@
 		A4715EA31A7A343C00A68635 /* DemoSocketTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DemoSocketTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A4715EA81A7A343C00A68635 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A4715EA91A7A343C00A68635 /* DemoSocketTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DemoSocketTests.m; sourceTree = "<group>"; };
+		A494D7601A7C0A420074D030 /* GCDAsyncSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GCDAsyncSocket.h; sourceTree = "<group>"; };
+		A494D7611A7C0A420074D030 /* GCDAsyncSocket.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GCDAsyncSocket.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -81,6 +84,7 @@
 		A4715E8C1A7A343C00A68635 /* DemoSocket */ = {
 			isa = PBXGroup;
 			children = (
+				A494D75F1A7C0A420074D030 /* TCP */,
 				A4715E911A7A343C00A68635 /* AppDelegate.h */,
 				A4715E921A7A343C00A68635 /* AppDelegate.m */,
 				A4715E941A7A343C00A68635 /* ViewController.h */,
@@ -117,6 +121,15 @@
 				A4715EA81A7A343C00A68635 /* Info.plist */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		A494D75F1A7C0A420074D030 /* TCP */ = {
+			isa = PBXGroup;
+			children = (
+				A494D7601A7C0A420074D030 /* GCDAsyncSocket.h */,
+				A494D7611A7C0A420074D030 /* GCDAsyncSocket.m */,
+			);
+			path = TCP;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -219,6 +232,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A494D7621A7C0A420074D030 /* GCDAsyncSocket.m in Sources */,
 				A4715E961A7A343C00A68635 /* ViewController.m in Sources */,
 				A4715E931A7A343C00A68635 /* AppDelegate.m in Sources */,
 				A4715E901A7A343C00A68635 /* main.m in Sources */,

@@ -9,6 +9,7 @@
 #import "ViewController.h"
 #include <ifaddrs.h>
 #include <arpa/inet.h>
+#import "GCDAsyncSocket.h"
 
 @interface ViewController ()
 
@@ -16,36 +17,16 @@
 
 @implementation ViewController
 {
-    NSInputStream *inputStream;
-    NSOutputStream *outputStream;
-    NSMutableData *OutputData;
+    GCDAsyncSocket *socket;
 }
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     _lblMyIP.text = [self getIPAddress];
+    socket = [[GCDAsyncSocket alloc] initWithDelegate:self delegateQueue:dispatch_get_main_queue()];
 }
 
-- (void)initNetworkCommunicationToHost:(NSString*)host andPort:(NSInteger)port {
-    CFReadStreamRef readStream;
-    CFWriteStreamRef writeStream;
-    CFStreamCreatePairWithSocketToHost(NULL, (__bridge CFStringRef)host, (UInt32)port, &readStream, &writeStream);
-    inputStream = (__bridge NSInputStream *)readStream;
-    outputStream = (__bridge NSOutputStream *)writeStream;
-    [inputStream setDelegate:self];
-    [outputStream setDelegate:self];
-    [inputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    [outputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    [inputStream open];
-    [outputStream open];
-}
-
-
--(void)connectToHost:(NSString*)host port:(NSInteger)port
-{
-    [self initNetworkCommunicationToHost:host andPort:port];
-}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -54,12 +35,7 @@
 
 - (IBAction)btnSend:(id)sender {
     if (_txtComposeMessage.text) {
-        
-        NSString *response  = @"HELLO1234";
-        NSData *data = [[NSData alloc] initWithData:[response dataUsingEncoding:NSASCIIStringEncoding]];
-        [outputStream write:[data bytes] maxLength:[data length]];	//<<Returns actual number of bytes sent - check if trying to send a large number of bytes as they may well not have all gone in this write and will need sending once there is a hasspaceavailable event
-
-        
+   
         NSString *sentString = [NSString stringWithFormat:@":Sent: %@",_txtComposeMessage.text];
         if (!_txtConversationView.text) {
             _txtConversationView.text = sentString;
@@ -72,54 +48,10 @@
 
 - (IBAction)btnConnect:(id)sender {
     if (_txtIpConnect.text) {
-        [self connectToHost:_txtIpConnect.text port:2233];
-    }
-}
-
-#pragma mark - NSStreamDelegate
--(void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode
-{
-    switch (eventCode) {
-            
-        case NSStreamEventOpenCompleted:
-            NSLog(@"Stream opened");
-            break;
-            
-        case NSStreamEventHasBytesAvailable:
-            if (aStream == inputStream) {
-                uint8_t buffer[1024];
-                int len;
-                
-                while ([inputStream hasBytesAvailable]) {
-                    len = [inputStream read:buffer maxLength:sizeof(buffer)];
-                    if (len > 0) {
-                        NSString *output = [[NSString alloc] initWithBytes:buffer length:len encoding:NSASCIIStringEncoding];
-                        if (nil != output) {
-                            NSLog(@"server said: %@", output);
-                            NSString *receivedString = [NSString stringWithFormat:@":Received: %@",output];
-                            if (!_txtConversationView.text) {
-                                _txtConversationView.text = receivedString;
-                            }else{
-                                _txtConversationView.text = [_txtConversationView.text stringByAppendingString:@"\n"];
-                                _txtConversationView.text = [_txtConversationView.text stringByAppendingString:receivedString];
-                            }
-                        }
-                    }
-                }
-            }
-            break;
-            
-        case NSStreamEventErrorOccurred:
-            NSLog(@"Can not connect to the host!");
-            break;
-            
-        case NSStreamEventEndEncountered:
-            [aStream close];
-            [aStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-            break;
-            
-        default:
-            NSLog(@"Unknown event");
+        NSError *error;
+        if (![socket connectToHost:[NSString stringWithFormat:@"http://%@",_txtIpConnect.text] onPort:5000 error:&error]) {
+            NSLog(@"connect error");
+        }
     }
 }
 
@@ -152,6 +84,42 @@
     freeifaddrs(interfaces);
     return address;
     
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark Socket Delegate
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+- (void)socket:(GCDAsyncSocket *)sock didConnectToHost:(NSString *)host port:(UInt16)port
+{
+    [sock performBlock:^{
+        if ([sock enableBackgroundingOnSocket])
+            NSLog(@"Enabled backgrounding on socket");
+        else
+            NSLog(@"Enabling backgrounding failed!");
+    }];
+}
+
+
+- (void)socket:(GCDAsyncSocket *)sock didWriteDataWithTag:(long)tag
+{
+    NSLog(@"socket:%p didWriteDataWithTag:%ld", sock, tag);
+}
+
+- (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
+{
+    NSLog(@"socket:%p didReadData:withTag:%ld", sock, tag);
+    
+    NSString *httpResponse = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    
+    NSLog(@"HTTP Response:\n%@", httpResponse);
+    
+}
+
+- (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err
+{
+    NSLog(@"socketDidDisconnect:%p withError: %@", sock, err);
 }
 
 @end
